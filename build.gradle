@@ -24,6 +24,7 @@ allprojects {
                 password = "sk.eyJ1IjoicGluZzc5ODUiLCJhIjoiY2tmZG42eG05MDd4YjMxbXZpYzJzd3ZiZCJ9.BV2fkd_cg8CtT0aFR9rlHg"
             }
         }
+        maven{url 'https://mapbox.bintray.com/mapbox'}
         google()
         jcenter()
     }
