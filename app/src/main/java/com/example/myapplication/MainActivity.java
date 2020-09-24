@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
         MainActivity.this.mapboxMap = mapboxMap;
 
-        mapboxMap.setStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded(){
+        mapboxMap.setStyle(new Style.Builder().fromUri("mapbox://styles/ping7985/ckf7m8ynh018819n0d9p8klvt"), new Style.OnStyleLoaded(){
             @Override
             public void onStyleLoaded(@NonNull Style style){
                 enableLocationComponent(style);
@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         loadedMapStyle.addLayer(destinationSymbolLayer);
     }
 
+    @SuppressWarnings({"MissingPermission"})
     @Override
     public boolean onMapClick(@NonNull LatLng point) {
 
