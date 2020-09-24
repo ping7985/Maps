@@ -1,21 +1,30 @@
 package com.example.myapplication;
 
+import android.annotation.SuppressLint;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+import android.location.Location;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.mapbox.android.core.location.LocationEngine;
+import com.mapbox.android.core.location.LocationEngineCallback;
+import com.mapbox.android.core.location.LocationEngineProvider;
+import com.mapbox.android.core.location.LocationEngineRequest;
+import com.mapbox.android.core.location.LocationEngineResult;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.GeoJson;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
@@ -29,6 +38,8 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.style.layers.FillLayer;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
@@ -36,6 +47,7 @@ import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import retrofit2.Call;
@@ -53,6 +65,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private PermissionsManager permissionsManager;
     private LocationComponent locationComponent;
+
+    private LocationEngine locationEngine;
+    private MainActivityLocationCallback callback = new MainActivityLocationCallback(this);
+    private long Default_Interval_In_Milliseconds = 1000L;
+    private long Default_Max_Wait_Time = Default_Interval_In_Milliseconds * 5;
+
     private DirectionsRoute currentRoute;
     private static final String TAG = "DirectionsActivity";
     private NavigationMapRoute navigationMapRoute;
@@ -105,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @SuppressWarnings({"MissingPermission"})
     @Override
-    public boolean onMapClick(@NonNull LatLng point) {
+    public boolean onMapClick(@NonNull final LatLng point) {
 
         Point destinationPoint = Point.fromLngLat(point.getLongitude(), point.getLatitude());
         Point originPoint = Point.fromLngLat(locationComponent.getLastKnownLocation().getLongitude(), locationComponent.getLastKnownLocation().getLatitude());
@@ -158,14 +176,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
 
             locationComponent = mapboxMap.getLocationComponent();
+            LocationComponentActivationOptions locationComponentActivationOptions = LocationComponentActivationOptions.builder(this, loadedMapStyle).useDefaultLocationEngine(false).build();
             locationComponent.activateLocationComponent(this, loadedMapStyle);
             locationComponent.setLocationComponentEnabled(true);
             locationComponent.setCameraMode(CameraMode.TRACKING);
+            locationComponent.setRenderMode(RenderMode.COMPASS);
+
+            initLocationEngine();
 
         } else {
             permissionsManager = new PermissionsManager(this);
             permissionsManager.requestLocationPermissions(this);
         }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void initLocationEngine(){
+        locationEngine = LocationEngineProvider.getBestLocationEngine(this);
+
+        LocationEngineRequest request = new LocationEngineRequest.Builder(Default_Interval_In_Milliseconds).setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY).setMaxWaitTime(Default_Max_Wait_Time).build();
+
+        locationEngine.requestLocationUpdates(request, callback, getMainLooper());
+        locationEngine.getLastLocation(callback);
     }
 
     @Override
@@ -186,6 +218,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         else{
             Toast.makeText(this, R.string.user_location_permission_not_granted, Toast.LENGTH_LONG).show();
             finish();
+        }
+    }
+
+    private static class MainActivityLocationCallback implements LocationEngineCallback<LocationEngineResult>{
+
+        private final WeakReference<MainActivity> activityWeakReference;
+
+        MainActivityLocationCallback(MainActivity activity){
+            this.activityWeakReference = new WeakReference<>(activity);
+        }
+
+        @SuppressLint("StringFormatInvalid")
+        @Override
+        public void onSuccess(LocationEngineResult result) {
+            MainActivity activity = activityWeakReference.get();
+
+            if(activity != null){
+                Location location = result.getLastLocation();
+
+                if(location == null){
+                    return;
+                }
+
+                Toast.makeText(activity, String.format(activity.getString(R.string.new_location), String.valueOf(result.getLastLocation().getLatitude()), String.valueOf(result.getLastLocation().getLongitude())), Toast.LENGTH_SHORT).show();
+
+                if(activity.mapboxMap != null && result.getLastLocation() != null){
+                    activity.mapboxMap.getLocationComponent().forceLocationUpdate(result.getLastLocation());
+                }
+            }
+        }
+
+        @Override
+        public void onFailure(@NonNull Exception exception) {
+            MainActivity activity = activityWeakReference.get();
+            if(activity != null){
+                Toast.makeText(activity, exception.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
