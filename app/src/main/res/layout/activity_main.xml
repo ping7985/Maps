@@ -10,24 +10,22 @@
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        mapbox:mapbox_cameraTargetLat="36.632543"
-        mapbox:mapbox_cameraTargetLng="127.452944"
-        mapbox:mapbox_cameraZoom = "15"
-        />
+        mapbox:layout_constraintBottom_toTopOf="parent"
+        mapbox:layout_constraintEnd_toStartOf="parent"
+        mapbox:layout_constraintStart_toStartOf="parent"
+        mapbox:layout_constraintTop_toTopOf="parent"
+        mapbox:mapbox_cameraZoom="15" />
 
     <Button
-        android:id="@+id/startButton"
+        android:id="@+id/button"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
         android:background="@color/mapbox_blue"
         android:enabled="false"
-        android:text="Start Navigation"
+        android:text="Start navigation"
         android:textColor="@color/colorPrimaryDark"
         mapbox:layout_constraintStart_toStartOf="parent"
-        mapbox:layout_constraintTop_toTopOf="parent" />
+        mapbox:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
