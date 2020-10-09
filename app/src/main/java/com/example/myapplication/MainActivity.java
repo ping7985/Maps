@@ -1,6 +1,5 @@
 package com.example.myapplication;
 
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -38,15 +37,15 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.style.layers.Property;
+import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
+import com.mapbox.mapboxsdk.style.expressions.Expression;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
+import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -104,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             enableLocationComponent(style);
             setUpData();
 
-            setModeButtonLiseners();
+            setModeButtonListeners();
 
             mapboxMap.addOnMapClickListener(MainActivity.this);
 
@@ -153,13 +152,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .withProperties(iconImage(CALLOUT_IMAGE_ID), iconAnchor(ICON_ANCHOR_BOTTOM), iconAllowOverlap(false), iconIgnorePlacement(false), iconOffset(new Float[] {-2f, -28f})));
     }
 
-    @Override
-    public boolean onMapClick(@NonNull LatLng point) {
-
-        Point destinationPoint = Point.fromLngLat(point.getLongitude(), point.getLatitude());
-        Point originPoint = Point.fromLngLat(locationComponent.getLastKnownLocation().getLongitude(), locationComponent.getLastKnownLocation().getLatitude());
-
+    private void QueryatPoint(LatLng point){
         PointF screenPoint = mapboxMap.getProjection().toScreenLocation(point);
+
         List<Feature> features = mapboxMap.queryRenderedFeatures(screenPoint);
 
         if (!features.isEmpty()) {
@@ -176,7 +171,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         } else {
             Toast.makeText(this, getString(R.string.query_feature_no_properties_found), Toast.LENGTH_SHORT).show();
+            mapView.getMapAsync(this);
         }
+    }
+
+    @Override
+    public boolean onMapClick(@NonNull LatLng point) {
+
+        Point destinationPoint = Point.fromLngLat(point.getLongitude(), point.getLatitude());
+        Point originPoint = Point.fromLngLat(locationComponent.getLastKnownLocation().getLongitude(), locationComponent.getLastKnownLocation().getLatitude());
+
+        QueryatPoint(point);
+        //PointF screenPoint = mapboxMap.getProjection().toScreenLocation(point);
+        /*List<Feature> features = mapboxMap.queryRenderedFeatures(screenPoint);
+
+        if (!features.isEmpty()) {
+            Feature feature = features.get(0);
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            if (feature.properties() != null) {
+                for (Map.Entry<String, JsonElement> entry : feature.properties().entrySet()) {
+                    stringBuilder.append(String.format("%s - %s", entry.getKey(), entry.getValue()));
+                    stringBuilder.append(System.getProperty("line.separator"));
+                }
+                new GenerateViewIconTask(MainActivity.this).execute(FeatureCollection.fromFeature(feature));
+            }
+        } else {
+            Toast.makeText(this, getString(R.string.query_feature_no_properties_found), Toast.LENGTH_SHORT).show();
+        }*/
 
         getRoute(originPoint, destinationPoint);
         NaviBtn.setEnabled(true);
@@ -303,7 +326,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void setModeButtonLiseners(){
+    private void setModeButtonListeners(){
         NaviBtn = findViewById(R.id.button_navi);
         NaviBtn.setOnClickListener(v -> {
             NavigationLauncherOptions options = NavigationLauncherOptions.builder().directionsRoute(directionsRoute).shouldSimulateRoute(true).build();
@@ -315,8 +338,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ResetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onMapReady(mapboxMap);
+                mapView.getMapAsync(MainActivity.this::onMapReady);
                 navigationMapRoute.removeRoute();
+                NaviBtn.setEnabled(false);
             }
         });
     }
