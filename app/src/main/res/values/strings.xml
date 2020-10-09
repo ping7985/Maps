@@ -1,7 +1,10 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Mine-Map</string>
     <string name="access_token">pk.eyJ1IjoicGluZzc5ODUiLCJhIjoiY2s5ams3cWViMDNsODNlbW8xN3RldW5rcSJ9.SS5M1o9TQGhkd-WJJXahCA</string>
 
     <string name="user_location_permission_explanation">This app needs location permissions to show its functionality.</string>
     <string name="user_location_permission_not_granted">You didn\'t grant location permissions.</string>
+    <string name="query_feature_no_properties_found">No feature properties found</string>
+    <string name="query_feature_marker_title">Properties:</string>
+    <string name="click_on_map_instruction">Tap on the map</string>
 </resources>
