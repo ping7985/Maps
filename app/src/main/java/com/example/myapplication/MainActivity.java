@@ -312,8 +312,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         ResetBtn = findViewById(R.id.button_reset);
-        ResetBtn.setOnClickListener(v -> {
-
+        ResetBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onMapReady(mapboxMap);
+                navigationMapRoute.removeRoute();
+            }
         });
     }
 
